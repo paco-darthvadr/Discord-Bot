@@ -1,0 +1,20 @@
+{
+  "name": "auto-role-bot",
+  "version": "1.0.0",
+  "description": "role-bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "author": "paco-darthvadr",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "discord.js": "13.3.1",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

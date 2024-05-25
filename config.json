@@ -1,0 +1,21 @@
+{
+    "BOT_TOKEN": "",
+    "SERVER_ID": "",
+    "ROLE_ID": "",
+    "NAME": "WelcomeBot",
+    "bot_admin_roles" : "WelcomeBot",
+    "welcomeChannel": "",
+    "rulesChannel": "",
+    "PREFIX": "",
+    "API_URL": "",
+    "broadcast_channel": "",
+    "adminbroadcastChannel": "",
+    "verus_blocks_channel": "",
+    "varrr_blocks_channel": "",
+    "baseUrlVarrr": "",
+    "baseUrlVerus": "",
+    "varrrEmojiId": "",
+    "verusEmojiId": "",
+    "admin_id": "",
+    "owner_id": ""
+}
