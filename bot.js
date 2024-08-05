@@ -28,6 +28,7 @@ let broadchastChannel = config.broadcast_channel;
 let adminbroadcastChannel = config.adminbroadcastChannel;
 let varrChannel = config.varrr_blocks_channel;
 let verusChannel = config.verus_blocks_channel;
+let vdexChannel = config.vdex_blocks_channel;
 
 
 
@@ -50,21 +51,25 @@ let lastKnownBlockCounts = {};
 // For block detection
 let lastKnownBlocks = {
     varrr: 0,
-    verus: 0
+    verus: 0,
+    vdex: 0
 };
 
 
 // Define the base URLs for each block type
 const baseUrlVarrr = config.baseUrlVarrr;
 const baseUrlVerus = config.baseUrlVerus;
+const baseUrlVdex = config.baseUrlVdex;
 
 // Define the custom emoji IDs for each pool
 const varrrEmojiId = config.varrrEmojiId; // Replace with the ID of your varrr emoji
 const verusEmojiId = config.verusEmojiId; // Replace w
+const vdexEmojiId = config.vdexEmojiId;
 
 // Construct the URLs for the custom emojis on your server
 const varrrEmojiUrl = `https://cdn.discordapp.com/emojis/${varrrEmojiId}.png`;
 const verusEmojiUrl = `https://cdn.discordapp.com/emojis/${verusEmojiId}.png`;
+const vdexEmojiUrl = `https://cdn.discordapp.com/emojis/${vdexEmojiId}.png`;
 
 
 
@@ -145,7 +150,7 @@ async function getBlockData() {
 
 // Parse for each blocks
 function parseBlockData(data) {
-    const blocks = { varrr: [], verus: [] };
+    const blocks = { varrr: [], verus: [], vdex: [] };
     Object.entries(data).forEach(([key, value]) => {
         const parts = value.split(":");
         const block = {
@@ -159,6 +164,8 @@ function parseBlockData(data) {
             blocks.varrr.push(block);
         } else if (key.startsWith("verus")) {
             blocks.verus.push(block);
+        } else if (key.startsWith("vdex")) {
+            blocks.vdex.push(block);
         }
     });
     return blocks;
@@ -187,20 +194,36 @@ async function monitorBlocks() {
         lastKnownBlocks.verus = Math.max(...newVerusBlocks.map(block => parseInt(block.blockNumber)));
         notifyNewBlock(newVerusBlocks, 'verus');
     }
+
+
+    // Monitor for new varrr blocks
+    const newVdexBlocks = parsedBlocks.vdex.filter(block => parseInt(block.blockNumber) > lastKnownBlocks.vdex);
+    if (newVdexBlocks.length > 0) {
+        lastKnownBlocks.vdex = Math.max(...newVdexBlocks.map(block => parseInt(block.blockNumber)));
+        notifyNewBlock(newVdexBlocks, 'vdex');
+    }
 }
 
 
 // Notifications, for blocks detected
 async function notifyNewBlock(blocks, type) {
-    const messageFunction = type === 'varrr' ? varrrbroadcast : verusbroadcast;
-    const color = type === 'varrr' ? '#9ea808' : '#180770';
     const title = `New ${type.charAt(0).toUpperCase() + type.slice(1)} Block Detected`;
+    const messageFunction = type === 'varrr' ? varrrbroadcast :
+                            type === 'verus' ? verusbroadcast :
+                            vdexbroadcast;
+    const color = type === 'varrr' ? '#9ea808' :
+                  type === 'verus' ? '#180770':
+                  '#5d0191';
 
     // Determine the base URL based on the block type
-    const baseUrl = type === 'varrr' ? baseUrlVarrr : baseUrlVerus;
+    const baseUrl = type === 'varrr' ? baseUrlVarrr :
+                    type === 'verus' ? baseUrlVerus :
+                    baseUrlVdex;
 
     // Set the appropriate emoji URL for the thumbnail
-    const emojiUrl = type === 'varrr' ? varrrEmojiUrl : verusEmojiUrl;
+    const emojiUrl = type === 'varrr' ? varrrEmojiUrl :
+                     type === 'verus' ? verusEmojiUrl :
+                     vdexEmojiUrl;
 
     // Fetch registered members
     const registeredMembers = await fetchRegisteredMembers();
@@ -260,7 +283,10 @@ async function monitorBlockChanges() {
 async function notifyBlockChange(poolName, statusType, count) {
     // Assume broadcast functions are globally defined as varrrbroadcast or verusbroadcast
     // and that they handle notifications for any types of messages (both pools if necessary).
-    const messageFunction = (poolName === 'varrr' ? varrrbroadcast : verusbroadcast);
+    const messageFunction = (poolName === 'varrr' ? varrrbroadcast :
+                             poolName === 'verus' ? verusbroadcast :
+                             poolName === 'vdex' ? vdexbroadcast : null
+                            );
 
     if (!messageFunction) {
         console.error("Notification channel not found for pool:", poolName);
@@ -950,7 +976,7 @@ discordClient.on("messageCreate", async message => {
     
         // Send appropriate embed based on user role
         if (isServerOwner) {
-            adminbroadcast({ embeds: [surveyEmbed] });
+            message.channel.send({ embeds: [surveyEmbed] });
         } else {
             return;
         }
@@ -990,6 +1016,13 @@ function varrrbroadcast(message) {
     if (message.length == 0) return;
 
     discordClient.channels.cache.get(varrChannel).send(message).catch(O_o => {}); // Catch to avoid logging channel permission issues
+    
+}
+
+function vdexbroadcast(message) {
+    if (message.length == 0) return;
+
+    discordClient.channels.cache.get(vdexChannel).send(message).catch(O_o => {}); // Catch to avoid logging channel permission issues
     
 }
 

@@ -1,10 +1,10 @@
 const surveyEmbeds = [
     {
-        title: "Which do you prefer",
-        description: "When blocks are found:\ndo you want to\nkeep general channel for notifactions ?\nOr change to specific Verus & VARRR channels ?",
+        title: "Fee Proposal",
+        description: "We are a community here at PaddyPool & Verus as a whole\nYour opinion matters to me\nSo this poll is to guage how you guys would feel about an increase of the pool fee\nThe increase would be to 3% instead of 1%\n with 1% going to the Verus Foundation to help with development\nThe other 1% to go towards server costs, which are very expensive\nThank you all for your support in making PaddyPool what it is",
         fields: [
-            { name: "Keep as is", value: "1️⃣" },
-            { name: "Change", value: "2️⃣" },
+            { name: "Agree to the proposal", value: "1️⃣" },
+            { name: "Don't agree", value: "2️⃣" },
             // Add more fields as needed
         ],
         color: "#0099ff"
