@@ -1,7 +1,7 @@
 const surveyEmbeds = [
     {
-        title: "Fee Proposal",
-        description: "We are a community here at PaddyPool & Verus as a whole\nYour opinion matters to me\nSo this poll is to guage how you guys would feel about an increase of the pool fee\nThe increase would be to 3% instead of 1%\n with 1% going to the Verus Foundation to help with development\nThe other 1% to go towards server costs, which are very expensive\nThank you all for your support in making PaddyPool what it is",
+        title: "Survey 1",
+        description: "",
         fields: [
             { name: "Agree to the proposal", value: "1️⃣" },
             { name: "Don't agree", value: "2️⃣" },
