@@ -1,7 +1,7 @@
 # Verus Network MergeMining
 
 
-# WelcomeBot
+# Discord Bot
 
 WelcomeBot is a Discord bot designed to monitor a mining pool on the Verus Network and its currencies.
 
