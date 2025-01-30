@@ -29,6 +29,7 @@ let adminbroadcastChannel = config.adminbroadcastChannel;
 let varrChannel = config.varrr_blocks_channel;
 let verusChannel = config.verus_blocks_channel;
 let vdexChannel = config.vdex_blocks_channel;
+let chipsChannel = config.chips_blocks_channel;
 
 
 
@@ -52,7 +53,8 @@ let lastKnownBlockCounts = {};
 let lastKnownBlocks = {
     varrr: 0,
     verus: 0,
-    vdex: 0
+    vdex: 0,
+    chips: 0
 };
 
 
@@ -60,16 +62,19 @@ let lastKnownBlocks = {
 const baseUrlVarrr = config.baseUrlVarrr;
 const baseUrlVerus = config.baseUrlVerus;
 const baseUrlVdex = config.baseUrlVdex;
+const baseUrlChips = config.baseUrlChips;
 
 // Define the custom emoji IDs for each pool
 const varrrEmojiId = config.varrrEmojiId; // Replace with the ID of your varrr emoji
 const verusEmojiId = config.verusEmojiId; // Replace w
 const vdexEmojiId = config.vdexEmojiId;
+const chipsEmojiId = config.chipsEmojiId;
 
 // Construct the URLs for the custom emojis on your server
 const varrrEmojiUrl = `https://cdn.discordapp.com/emojis/${varrrEmojiId}.png`;
 const verusEmojiUrl = `https://cdn.discordapp.com/emojis/${verusEmojiId}.png`;
 const vdexEmojiUrl = `https://cdn.discordapp.com/emojis/${vdexEmojiId}.png`;
+const chipsEmojiUrl = `https://cdn.discordapp.com/emojis/${chipsEmojiId}.png`;
 
 
 
@@ -150,7 +155,7 @@ async function getBlockData() {
 
 // Parse for each blocks
 function parseBlockData(data) {
-    const blocks = { varrr: [], verus: [], vdex: [] };
+    const blocks = { varrr: [], verus: [], vdex: [], chips: [] };
     Object.entries(data).forEach(([key, value]) => {
         const parts = value.split(":");
         const block = {
@@ -166,6 +171,8 @@ function parseBlockData(data) {
             blocks.verus.push(block);
         } else if (key.startsWith("vdex")) {
             blocks.vdex.push(block);
+        } else if (key.startsWith("chips")) {
+            blocks.chips.push(block);
         }
     });
     return blocks;
@@ -180,6 +187,13 @@ async function monitorBlocks() {
         return;
     }
     const parsedBlocks = parseBlockData(blockData);
+
+    // Monitor for new chips blocks 
+    const newChipsBlocks = parsedBlocks.chips.filter(block => parseInt(block.blockNumber) > lastKnownBlocks.chips);
+    if (newChipsBlocks.length > 0) {
+        lastKnownBlocks.chips = Math.max(...newChipsBlocks.map(block => parseInt(block.blockNumber)));
+        notifyNewBlock(newChipsBlocks, 'chips');
+    }	
 
     // Monitor for new varrr blocks
     const newVarrrBlocks = parsedBlocks.varrr.filter(block => parseInt(block.blockNumber) > lastKnownBlocks.varrr);
@@ -209,20 +223,24 @@ async function monitorBlocks() {
 async function notifyNewBlock(blocks, type) {
     const title = `New ${type.charAt(0).toUpperCase() + type.slice(1)} Block Detected`;
     const messageFunction = type === 'varrr' ? varrrbroadcast :
+	                    type === 'chips' ? chipsbroadcast :
                             type === 'verus' ? verusbroadcast :
                             vdexbroadcast;
     const color = type === 'varrr' ? '#9ea808' :
+	          type === 'chips' ? '#52f711':
                   type === 'verus' ? '#180770':
                   '#5d0191';
 
     // Determine the base URL based on the block type
     const baseUrl = type === 'varrr' ? baseUrlVarrr :
                     type === 'verus' ? baseUrlVerus :
+	            type === 'chips' ? baseUrlChips :
                     baseUrlVdex;
 
     // Set the appropriate emoji URL for the thumbnail
     const emojiUrl = type === 'varrr' ? varrrEmojiUrl :
                      type === 'verus' ? verusEmojiUrl :
+	             type === 'chips' ? chipsEmojiUrl :
                      vdexEmojiUrl;
 
     // Fetch registered members
@@ -285,6 +303,7 @@ async function notifyBlockChange(poolName, statusType, count) {
     // and that they handle notifications for any types of messages (both pools if necessary).
     const messageFunction = (poolName === 'varrr' ? varrrbroadcast :
                              poolName === 'verus' ? verusbroadcast :
+			     poolName === 'chips' ? chipsbroadcast :
                              poolName === 'vdex' ? vdexbroadcast : null
                             );
 
@@ -558,7 +577,9 @@ discordClient.on("messageCreate", async message => {
             // Define color mapping for pools based on pool name or other identifier
             const colorMap = {
                 'varrr': '#c7b302',   // yellow'varrr'
-                'verus': '#180770'    // Blue'verus'
+                'verus': '#180770',   // Blue'verus'
+                'vdex': '#5d0191',
+                'chips': '#52f711',
                 // Add more mappings as necessary for additional pools
             };
     
@@ -615,7 +636,9 @@ discordClient.on("messageCreate", async message => {
             // Create an embed for each pool
             Object.entries(stat.pools).forEach(([poolName, poolData]) => {
                 //console.log(poolData)
-                const color = poolName === 'varrr' ? '#c7b302' : '#180770'; // gold for 'varrr', Blue for 'verus'
+            const color = poolName === 'varrr' ? '#c7b302' :
+                          poolName === 'chips' ? '#52f711' :
+                          poolName === 'verus' ? '#180770' : '#5d0191' // gold for 'varrr', Blue for 'verus'
 
             // Check for zero hashrate and worker count and adjust values accordingly
             //const hashrateValue = poolData.hashrate === 0 ? "mergemining" : `${poolData.hashrate} H/s`;
@@ -691,6 +714,42 @@ discordClient.on("messageCreate", async message => {
         } else {
             broadcast("No Verus blocks data available.");
         }
+
+	        // Display vdex blocks
+        if (parsedBlocks.vdex.length > 0) {
+            const vdexEmbed = new Discord.MessageEmbed()
+                .setColor('#5d0191')
+                .setTitle('Current VDEX Blocks')
+                .setThumbnail(vdexEmojiUrl.url);
+    
+            parsedBlocks.vdex.forEach((block, index) => {
+                if (index < 1) { // Limit to 1 block to avoid spamming
+                    vdexEmbed.addField(`Block Number: ${block.blockNumber}`, `Explorer: [${block.blockHash}](${baseUrlVdex}${block.blockHash})\nTimestamp: ${block.timestamp}`, false);
+                }
+            });
+            broadcast({ embeds: [vdexEmbed] });
+        } else {
+            broadcast("No VDEX blocks data available.");
+        }
+
+        // Display chips blocks
+        if (parsedBlocks.chips.length > 0) {
+            const chipsEmbed = new Discord.MessageEmbed()
+                .setColor('#a5ad03')
+                .setTitle('Current CHIPS Blocks')
+                .setThumbnail(chipsEmojiUrl.url);
+    
+            parsedBlocks.chips.forEach((block, index) => {
+                if (index < 1) { // Limit to 1 block to avoid spamming
+                    chipsEmbed.addField(`Block Number: ${block.blockNumber}`, `Explorer: [${block.blockHash}](${baseUrlChips}${block.blockHash})\nTimestamp: ${block.timestamp}`, false);
+                }
+            });
+            broadcast({ embeds: [chipsEmbed] });
+        } else {
+            broadcast("No CHIPS blocks data available.");
+        }
+
+	    
     } else if (command === "workers") {
         try {
             // Check if user has registered a wallet address
@@ -1023,6 +1082,13 @@ function vdexbroadcast(message) {
     if (message.length == 0) return;
 
     discordClient.channels.cache.get(vdexChannel).send(message).catch(O_o => {}); // Catch to avoid logging channel permission issues
+    
+}
+
+function chipsbroadcast(message) {
+    if (message.length == 0) return;
+
+    discordClient.channels.cache.get(chipsChannel).send(message).catch(O_o => {}); // Catch to avoid logging channel permission issues
     
 }
 
