@@ -1,7 +1,7 @@
 {
-  "name": "auto-role-bot",
+  "name": "DiscordBot",
   "version": "1.0.0",
-  "description": "role-bot",
+  "description": "DiscordBot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
